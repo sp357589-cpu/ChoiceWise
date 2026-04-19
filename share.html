@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChoiceWise - Shared Decision</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="header-top">
+                <div class="header-logo">
+                    <h1>🧠 ChoiceWise</h1>
+                    <p class="subtitle">Shared Decision Analysis</p>
+                </div>
+                <a href="index.html" class="btn-home">← Back to Home</a>
+            </div>
+        </header>
+
+        <main>
+            <!-- SHARED DECISION VIEW -->
+            <section class="shared-decision-section">
+                <div id="loadingMessage" class="loading-text">📄 Loading shared decision...</div>
+                
+                <div id="decisionContent" style="display: none;">
+                    <!-- OPTIONS -->
+                    <div class="shared-options">
+                        <div class="shared-option">
+                            <h3>Option 1: <span id="sharedOption1"></span></h3>
+                            <div class="shared-pros-cons">
+                                <h4>✅ Pros:</h4>
+                                <ul id="sharedPros1List"></ul>
+                                <h4>❌ Cons:</h4>
+                                <ul id="sharedCons1List"></ul>
+                            </div>
+                        </div>
+
+                        <div class="shared-option">
+                            <h3>Option 2: <span id="sharedOption2"></span></h3>
+                            <div class="shared-pros-cons">
+                                <h4>✅ Pros:</h4>
+                                <ul id="sharedPros2List"></ul>
+                                <h4>❌ Cons:</h4>
+                                <ul id="sharedCons2List"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shared-info">
+                        <p>📅 Created: <span id="sharedCreatedDate"></span></p>
+                        <button onclick="copyDecisionToLocal()" class="btn-copy">📋 Copy to My Decisions</button>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="error-text" style="display: none;">
+                    ❌ Could not load shared decision. The link may be invalid or expired.
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>ChoiceWise © 2026 | Making better decisions, one choice at a time. 💭</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE_URL = '';
+
+        // Load shared decision when page opens
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSharedDecision();
+        });
+
+        /**
+         * Load a shared decision by share code from URL
+         */
+        async function loadSharedDecision() {
+            const params = new URLSearchParams(window.location.search);
+            const shareCode = params.get('code');
+
+            if (!shareCode) {
+                showError('No share code provided in URL');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/decisions/share/${shareCode}`);
+                
+                if (response.ok) {
+                    const decision = await response.json();
+                    displaySharedDecision(decision);
+                } else {
+                    showError('Shared decision not found');
+                }
+            } catch (error) {
+                console.error('Load shared decision error:', error);
+                showError('Error loading shared decision');
+            }
+        }
+
+        /**
+         * Display the shared decision
+         */
+        function displaySharedDecision(decision) {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const decisionContent = document.getElementById('decisionContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            // Set option names
+            document.getElementById('sharedOption1').textContent = decision.option1Name;
+            document.getElementById('sharedOption2').textContent = decision.option2Name;
+
+            // Display pros and cons
+            displayList('sharedPros1List', decision.pros1);
+            displayList('sharedCons1List', decision.cons1);
+            displayList('sharedPros2List', decision.pros2);
+            displayList('sharedCons2List', decision.cons2);
+
+            // Display created date
+            document.getElementById('sharedCreatedDate').textContent = 
+                new Date(decision.createdAt).toLocaleString();
+
+            // Store decision data for copying
+            window.currentSharedDecision = decision;
+
+            decisionContent.style.display = 'block';
+        }
+
+        /**
+         * Display a list of items
+         */
+        function displayList(elementId, items) {
+            const list = document.getElementById(elementId);
+            list.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                list.innerHTML = '<li><em>None</em></li>';
+                return;
+            }
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                const text = item.text || item;
+                const importance = item.importance ? ` (importance: ${item.importance}/5)` : '';
+                li.textContent = text + importance;
+                list.appendChild(li);
+            });
+        }
+
+        /**
+         * Copy shared decision to user's decisions
+         */
+        async function copyDecisionToLocal() {
+            if (!window.currentSharedDecision) {
+                alert('Error: No decision loaded');
+                return;
+            }
+
+            const decision = window.currentSharedDecision;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/decisions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        option1Name: decision.option1Name,
+                        option2Name: decision.option2Name,
+                        pros1: decision.pros1,
+                        cons1: decision.cons1,
+                        pros2: decision.pros2,
+                        cons2: decision.cons2
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ Decision copied to your decisions! Check "My Saved Decisions" section.');
+                } else {
+                    alert('❌ Failed to copy decision');
+                }
+            } catch (error) {
+                console.error('Copy error:', error);
+                alert('❌ Error copying decision');
+            }
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = '❌ ' + message;
+        }
+    </script>
+</body>
+</html>

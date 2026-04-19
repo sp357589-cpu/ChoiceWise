@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual env
+backend/env/
+
+# Firebase credentials
+backend/credentials.json
+
+# Local database
+backend/decisions.db
+
+# Environment files
+*.env
