@@ -1200,28 +1200,31 @@ async function shareDecision(decisionId) {
 }
 
 /**
- * Helper function to add pro field with value directly
+ * Helper function to add con field with value directly
  */
+function addConFieldWithValue(optionNum, text, importance) {
+    const list = document.getElementById(`cons${optionNum}List`);
+    const listItem = document.createElement('li');
+    listItem.className = 'item';
 
-    
     const itemContent = document.createElement('div');
     itemContent.className = 'item-content';
     itemContent.innerHTML = `<strong>${text}</strong>`;
-    
+
     const importance_badge = document.createElement('span');
     importance_badge.className = 'importance-badge importance-' + importance;
     importance_badge.textContent = importance + '/5';
-    
+
     const itemRemove = document.createElement('button');
     itemRemove.className = 'btn-remove';
     itemRemove.textContent = '✕';
     itemRemove.onclick = function() { listItem.remove(); };
-    
+
     listItem.appendChild(itemContent);
     listItem.appendChild(importance_badge);
     listItem.appendChild(itemRemove);
     list.appendChild(listItem);
-    
+
     // Update data structure
     decisions[`option${optionNum}`].cons.push({
         text: text,
