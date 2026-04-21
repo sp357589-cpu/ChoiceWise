@@ -6,6 +6,7 @@ __pycache__/
 
 # Virtual env
 backend/env/
+.venv/
 
 # Firebase credentials
 backend/credentials.json
